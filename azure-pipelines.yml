@@ -9,6 +9,26 @@ trigger:
 pool:
   name: Default
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+
+stages:
+- stage: Build
+  displayName: Build image
+  jobs:
+  - job: checkout
+    displayName: PullRepo
+    steps:
+      - script: |
+         docker pull nginx:latest
+         docker tag nginx:latest reddynaresh76/testrepo:$(Build.BuildNumber)
+         docker push reddynaresh76/testrepo:$(Build.BuildNumber)
+
+  - job: variables_handler
+    displayName: Create artifact from variables
+    steps:
+      - script: |
+         echo { '"test21"' : '"$(Build.BuildNumber)"' , '"test12"' : '"$(Build.DefinitionName)"' } >  $(Build.ArtifactStagingDirectory)/pipeline.json
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'drop'
+          publishLocation: 'Container'
